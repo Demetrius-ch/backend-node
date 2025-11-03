@@ -1,6 +1,8 @@
 const express = require("express");
+const bodyParser = require("body-parser");
 let pokemons = require("./mock-pokemon");
 let { success, getUniqueId } = require("./helper");
+const { squelize, Sequelize } = require("sequelize");
 const morgan = require("morgan");
 const favicon = require("serve-favicon");
 
@@ -9,6 +11,14 @@ const favicon = require("serve-favicon");
 
 const app = express();
 const port = 3000;
+const sequelize = new Sequelize("root", "root", "", {
+  host: "localhost",
+  dialect: "pg",
+  dialectOptions: {
+    timezone: "Etc/GMT-2",
+  },
+  logging: false,
+});
 //Miidleware router 1
 /* const logger = (req, res, next) => {
   console.log(`URL : ${req.url}`);
@@ -20,7 +30,10 @@ const port = 3000;
   next();
 });*/
 
-app.use(favicon(__dirname + "/favicon.ico")).use(morgan("dev"));
+app
+  .use(favicon(__dirname + "/favicon.ico"))
+  .use(morgan("dev"))
+  .use(bodyParser.json());
 
 app.get("/", (req, res) => res.send("Hello express 3  !"));
 app.get("/api/pokemons", (req, res) => {
@@ -44,6 +57,22 @@ app.post("/api/pokemons", (req, res) => {
   pokemons.push(pokemonCreated);
   const message = `Le pokemon ${pokemonCreated.name} a été bien créé.`;
   res.json(success(message, pokemonCreated));
+});
+app.put("/api/pokemons/:id", (req, res) => {
+  const id = parseInt(req.params.id);
+  const updatedPokemons = { ...req.body, id: id };
+  pokemons = pokemons.map((pokemon) => {
+    return pokemon.id === id ? updatedPokemons : pokemon;
+    const message = `Votre pokemon ${updatedPokemons.name} a été bien modifié.`;
+    res.json(success(message, updatedPokemons));
+  });
+});
+app.delete("/api/pokemons/:id", (req, res) => {
+  const id = parseInt(req.params.id);
+  const pokemonsDelete = pokemons.find((pokemon) => (pokemon.id = id));
+  pokemons.filter((pokemon) => pokemon.id !== id);
+  const message = `Le pokemon ${pokemonsDelete.name} a été supprimé avec succès`;
+  res.json(success(message, pokemonsDelete));
 });
 
 app.listen(port, () =>
