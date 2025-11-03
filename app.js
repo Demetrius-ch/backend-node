@@ -1,8 +1,11 @@
 const express = require("express");
 let pokemons = require("./mock-pokemon");
-let { success } = require("./helper");
-/*const { error } = require("./error");
-const {pokemonError} = require("./mock-pokemon-error")*/
+let { success, getUniqueId } = require("./helper");
+const morgan = require("morgan");
+const favicon = require("serve-favicon");
+
+/*const { error } = require("./error");*/
+//const {pokemonError} = require("./mock-pokemon-error")
 
 const app = express();
 const port = 3000;
@@ -12,10 +15,12 @@ const port = 3000;
   next();
 };*/
 //Racourcis sans logger (Middleware router 2)
-app.use((req, res, next) => {
+/* app.use((req, res, next) => {
   console.log(`URL ${req.url}`);
   next();
-});
+});*/
+
+app.use(favicon(__dirname + "/favicon.ico")).use(morgan("dev"));
 
 app.get("/", (req, res) => res.send("Hello express 3  !"));
 app.get("/api/pokemons", (req, res) => {
@@ -32,6 +37,13 @@ app.get("/api/pokemons/:id", (req, res) => {
   }*/
   const message = "Un pokemon a bien été trouvé. ";
   res.json(success(message, pokemon));
+});
+app.post("/api/pokemons", (req, res) => {
+  const id = getUniqueId(pokemons);
+  const pokemonCreated = { ...req.body, ...{ id: id, created: new Date() } };
+  pokemons.push(pokemonCreated);
+  const message = `Le pokemon ${pokemonCreated.name} a été bien créé.`;
+  res.json(success(message, pokemonCreated));
 });
 
 app.listen(port, () =>
